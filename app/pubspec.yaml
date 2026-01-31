@@ -1,0 +1,39 @@
+name: smspush_app
+description: SMS Push Android Uygulaması - API üzerinden SMS gönderme
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # HTTP İstekleri
+  http: ^1.1.0
+  
+  # SMS İzinleri ve Gönderimi
+  telephony: ^0.2.0
+  
+  # Cihaz Bilgisi
+  device_info_plus: ^9.1.0
+  
+  # Arka Plan Servisi (Sürekli çalışır)
+  flutter_background_service: ^5.1.0
+  flutter_background_service_android: ^6.3.1
+  flutter_local_notifications: ^17.0.0
+  
+  # Veri Saklama
+  shared_preferences: ^2.2.2
+  
+  # İzin Yönetimi
+  permission_handler: ^11.0.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
