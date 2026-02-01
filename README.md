@@ -1,176 +1,171 @@
-# SMS Gateway System
+# SMS Gateway Sistemi
 
-SMS Gateway is an automated SMS sending system that uses an Android device to send SMS messages via a RESTful API. The system consists of a PHP backend API connected to PostgreSQL and a Flutter Android application that runs as a background service.
+SMS Gateway, Android cihazlar üzerinden REST API aracılığıyla otomatik SMS gönderimi sağlayan bir sistemdir. Sistem, MySQL veritabanına bağlı PHP tabanlı bir backend API ve arkaplanda çalışan Flutter Android uygulamasından oluşur.
 
-## Project Structure
+## Sistem Bileşenleri
 
-### web/ - Backend API (PHP)
+### Backend (web/)
 
-PHP-based REST API for managing SMS requests and device authentication.
+PHP ile yazılmış REST API sunucusu. SMS isteklerini yönetir ve cihaz doğrulama işlemlerini gerçekleştirir.
 
-**Files:**
-- `config.php` - PostgreSQL database configuration
-- `database.sql` - Database schema (devices, sms_requests tables)
-- `api.php` - REST API endpoints
+**Dosyalar:**
+- `api.php` - REST API endpoint'leri
+- `database.sql` - Veritabanı şeması
+- `config.php` - MySQL bağlantı ayarları (örnek dosya)
 
-**Technology Stack:**
-- PHP 8.0+
-- PostgreSQL 12+
-- PDO for database connections
+**Gereksinimler:**
+- PHP 8.0 veya üzeri
+- MySQL 5.7 veya üzeri
+- PDO MySQL eklentisi
 
-### app/ - Android Application (Flutter)
+### Android Uygulaması (app/)
 
-Flutter-based Android application that runs as a foreground service to poll the API and send SMS messages.
+Flutter ile geliştirilmiş Android uygulaması. Arkaplan servisi olarak çalışır, düzenli aralıklarla API'yi kontrol eder ve bekleyen SMS'leri gönderir.
 
-**Key Features:**
-- Background service with 15-second polling interval
-- Foreground notification showing sent/pending count
-- API key authentication
-- Automatic device registration
-- SMS sending via telephony package
+**Özellikler:**
+- 15 saniyede bir API kontrolü
+- Otomatik cihaz kaydı
+- API anahtarı ile kimlik doğrulama
+- Ön plan bildirimi (foreground service)
+- Otomatik SMS gönderimi
 
-**Technology Stack:**
-- Flutter 3.0+
-- Dart
-- flutter_background_service
-- telephony package
-
-## Installation
-
-### Prerequisites
-
-**For Web API:**
-- PHP 8.0 or higher
-- PostgreSQL 12 or higher
-- PDO PostgreSQL extension enabled
-
-**For Android App:**
+**Gereksinimler:**
 - Flutter SDK 3.0+
 - Android SDK (API 23+)
 - Java 17+
 
-### Backend Setup
+## Kurulum
 
-**1. Database Configuration**
+### Backend Kurulumu
 
-Create PostgreSQL database and user:
-```bash
-psql -U postgres
-CREATE DATABASE smspush;
-```
+**1. Veritabanı Oluşturma**
 
-**2. Import Database Schema**
+MySQL'de yeni veritabanı ve kullanıcı oluşturun:
 
 ```bash
-PGPASSWORD='your_password' psql -h your_host -p 5432 -U postgres -d smspush -f web/database.sql
+mysql -u root -p
+CREATE DATABASE smsgateway CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'smsgateway'@'localhost' IDENTIFIED BY 'zxc123123+a';
+GRANT ALL PRIVILEGES ON smsgateway.* TO 'smsgateway'@'localhost';
+FLUSH PRIVILEGES;
+EXIT;
 ```
 
-**3. Configure Database Connection**
+**2. Veritabanı Şemasını Yükleme**
 
-Edit `web/config.php`:
+```bash
+mysql -u smsgateway -p smsgateway < web/database.sql
+```
+
+**3. API Yapılandırması**
+
+`web/config.php` dosyasını düzenleyin:
+
 ```php
-define('DB_HOST', 'your_host');
-define('DB_PORT', '5432');
-define('DB_NAME', 'smspush');
-define('DB_USER', 'postgres');
-define('DB_PASS', 'your_password');
+define('DB_HOST', 'localhost');
+define('DB_PORT', '3306');
+define('DB_NAME', 'smsgateway');
+define('DB_USER', 'smsgateway');
+define('DB_PASS', 'pass');
 ```
 
-**4. Deploy API**
+**4. API'yi Sunucuya Yükleme**
 
-Upload `web/` directory contents to your web server or test locally:
+`web/` klasörünün içeriğini web sunucunuza yükleyin. Yerel test için:
+
 ```bash
 cd web
 php -S 0.0.0.0:8000
 ```
 
-API will be available at: `http://your-server/api.php`
+API adresi: `http://sunucu-adresi/api.php`
 
-### Android Application Setup
+### Android Uygulaması Kurulumu
 
-**1. Install Dependencies**
+**1. Bağımlılıkları Yükleme**
 
 ```bash
 cd app
 flutter pub get
 ```
 
-**2. Build Release APK**
+**2. APK Oluşturma**
 
 ```bash
 flutter build apk --release
 ```
 
-Output location: `app/build/app/outputs/flutter-apk/app-release.apk`
+APK dosyası: `app/build/app/outputs/flutter-apk/app-release.apk`
 
-**3. Install on Android Device**
+**3. Android Cihaza Yükleme**
 
-- Transfer APK to Android device
-- Enable "Install from Unknown Sources"
-- Install APK
-- Grant SMS and notification permissions
+- APK dosyasını Android cihaza aktarın
+- Bilinmeyen kaynaklardan yüklemeye izin verin
+- APK'yı yükleyin
+- SMS ve bildirim izinlerini verin
 
-**4. Configure Application**
+**4. Uygulamayı Yapılandırma**
 
-- Open application
-- Enter API URL (e.g., `https://your-domain.com/sms/api.php`)
-- Device will auto-register and receive API key
-- Start background service
+- Uygulamayı açın
+- API URL'sini girin (örnek: `https://sunucu.com/sms/api.php`)
+- Cihaz otomatik olarak kaydedilir ve API anahtarı alır
+- Servis otomatik başlar
 
-## API Documentation
+## API Kullanımı
 
-### Base URL
+### Temel URL
+
 ```
-https://your-domain.com/sms/api.php
+https://sunucu.com/sms/api.php
 ```
 
-### Endpoints
+### Endpoint'ler
 
-#### 1. Register Device
+#### 1. Cihaz Kaydı
 
-Register a new device and obtain API key.
+Yeni bir cihaz kaydeder ve API anahtarı oluşturur.
 
-**Request:**
+**İstek:**
 ```http
 POST /api.php?request=register-device
 Content-Type: application/json
 
 {
-  "device_id": "unique_device_identifier",
-  "device_name": "Device Name",
-  "phone_number": "+1234567890"
+  "device_id": "benzersiz_cihaz_kimlik",
+  "device_name": "Cihaz Adı",
+  "phone_number": "+905551234567"
 }
 ```
 
-**Response:**
+**Yanıt:**
 ```json
 {
   "success": true,
   "message": "Cihaz kaydedildi",
-  "api_key": "generated_64_char_api_key"
+  "api_key": "64_karakterlik_api_anahtari"
 }
 ```
 
-#### 2. Get Pending Messages
+#### 2. Bekleyen Mesajları Getirme
 
-Retrieve pending SMS messages for authenticated device.
+Cihaz için bekleyen SMS'leri getirir.
 
-**Request:**
+**İstek:**
 ```http
 GET /api.php?request=pending
-X-API-Key: your_api_key
+X-API-Key: api_anahtariniz
 ```
 
-**Response:**
+**Yanıt:**
 ```json
 {
   "success": true,
-  "count": 2,
+  "count": 1,
   "messages": [
     {
       "id": 1,
-      "phone_number": "+1234567890",
-      "message": "Test message",
+      "phone_number": "+905551234567",
+      "message": "Test mesajı",
       "priority": 5,
       "scheduled_at": null
     }
@@ -178,14 +173,14 @@ X-API-Key: your_api_key
 }
 ```
 
-#### 3. Update SMS Status
+#### 3. SMS Durumu Güncelleme
 
-Update the status of a sent SMS.
+Gönderilen SMS'in durumunu günceller.
 
-**Request:**
+**İstek:**
 ```http
 POST /api.php?request=update-status
-X-API-Key: your_api_key
+X-API-Key: api_anahtariniz
 Content-Type: application/json
 
 {
@@ -195,9 +190,9 @@ Content-Type: application/json
 }
 ```
 
-**Status values:** `pending`, `sent`, `failed`, `delivered`
+**Durum değerleri:** `pending`, `sent`, `failed`, `delivered`
 
-**Response:**
+**Yanıt:**
 ```json
 {
   "success": true,
@@ -205,26 +200,26 @@ Content-Type: application/json
 }
 ```
 
-#### 4. Queue SMS for Sending
+#### 4. SMS Gönderme Talebi
 
-Add a new SMS to the queue for a specific device.
+Belirli bir cihaz için SMS kuyruğuna mesaj ekler.
 
-**Request:**
+**İstek:**
 ```http
 POST /api.php?request=send-sms
 Content-Type: application/json
 
 {
-  "device_id": "unique_device_identifier",
-  "phone_number": "+1234567890",
-  "message": "Your message here",
+  "device_id": "cihaz_kimlik",
+  "phone_number": "+905551234567",
+  "message": "Gönderilecek mesaj",
   "priority": 5
 }
 ```
 
-**Priority:** 1-10 (10 = highest priority)
+**Öncelik:** 1-10 arası (10 en yüksek)
 
-**Response:**
+**Yanıt:**
 ```json
 {
   "success": true,
@@ -233,243 +228,123 @@ Content-Type: application/json
 }
 ```
 
-## Database Schema
+## Veritabanı Yapısı
 
-### devices Table
+### devices Tablosu
 
-| Column | Type | Description |
-|--------|------|-------------|
-| id | SERIAL | Primary key |
-| device_id | VARCHAR(255) | Unique device identifier |
-| device_name | VARCHAR(255) | Device display name |
-| phone_number | VARCHAR(20) | Device phone number |
-| api_key | VARCHAR(255) | Authentication key |
-| is_active | BOOLEAN | Device active status |
-| last_seen | TIMESTAMP | Last API request time |
-| created_at | TIMESTAMP | Registration time |
-| updated_at | TIMESTAMP | Last update time |
+Kayıtlı cihaz bilgilerini saklar.
 
-### sms_requests Table
+| Sütun | Tip | Açıklama |
+|-------|-----|----------|
+| id | INT AUTO_INCREMENT | Birincil anahtar |
+| device_id | VARCHAR(255) | Benzersiz cihaz kimliği |
+| device_name | VARCHAR(255) | Cihaz adı |
+| phone_number | VARCHAR(20) | Cihaz telefon numarası |
+| api_key | VARCHAR(255) | Kimlik doğrulama anahtarı |
+| is_active | TINYINT(1) | Cihaz aktif durumu |
+| last_seen | TIMESTAMP | Son API isteği zamanı |
+| created_at | TIMESTAMP | Kayıt zamanı |
+| updated_at | TIMESTAMP | Son güncelleme zamanı |
 
-| Column | Type | Description |
-|--------|------|-------------|
-| id | SERIAL | Primary key |
-| device_id | VARCHAR(255) | Foreign key to devices |
-| phone_number | VARCHAR(20) | Recipient number |
-| message | TEXT | SMS content |
-| status | VARCHAR(20) | pending/sent/failed/delivered |
-| priority | SMALLINT | Priority (1-10) |
-| scheduled_at | TIMESTAMP | Scheduled send time |
-| sent_at | TIMESTAMP | Actual send time |
-| delivered_at | TIMESTAMP | Delivery confirmation time |
-| error_message | TEXT | Error details if failed |
-| created_at | TIMESTAMP | Request creation time |
-| updated_at | TIMESTAMP | Last update time |
+### sms_requests Tablosu
 
-## Usage Example
+SMS gönderim isteklerini saklar.
 
-**1. Register your Android device:**
+| Sütun | Tip | Açıklama |
+|-------|-----|----------|
+| id | INT AUTO_INCREMENT | Birincil anahtar |
+| device_id | VARCHAR(255) | Cihaz kimliği (foreign key) |
+| phone_number | VARCHAR(20) | Alıcı telefon numarası |
+| message | TEXT | SMS içeriği |
+| status | VARCHAR(20) | Durum (pending/sent/failed/delivered) |
+| priority | SMALLINT | Öncelik (1-10) |
+| scheduled_at | TIMESTAMP | Planlanan gönderim zamanı |
+| sent_at | TIMESTAMP | Gerçek gönderim zamanı |
+| delivered_at | TIMESTAMP | Teslim edilme zamanı |
+| error_message | TEXT | Hata mesajı (varsa) |
+| created_at | TIMESTAMP | Oluşturulma zamanı |
+| updated_at | TIMESTAMP | Son güncelleme zamanı |
 
-Run the app on your device and it will auto-register.
+## Kullanım Örneği
 
-**2. Send SMS via API:**
+**1. Android cihazınızı kaydedin**
+
+Uygulamayı açın, API URL'sini girin. Cihaz otomatik kaydedilir.
+
+**2. API üzerinden SMS gönderin**
 
 ```bash
-curl -X POST "https://your-domain.com/sms/api.php?request=send-sms" \
+curl -X POST "https://sunucu.com/sms/api.php?request=send-sms" \
   -H "Content-Type: application/json" \
   -d '{
-    "device_id": "your_device_id",
-    "phone_number": "+1234567890",
-    "message": "Test message from SMS Gateway",
+    "device_id": "cihaz_kimliginiz",
+    "phone_number": "+905551234567",
+    "message": "Test mesajı",
     "priority": 8
   }'
 ```
 
-**3. Monitor:**
+**3. SMS otomatik gönderilir**
 
-The Android app polls every 15 seconds, detects the message, and sends it automatically.
+Uygulama 15 saniyede bir kontrol eder, mesajı algılar ve otomatik gönderir.
 
-## Configuration
+## Yapılandırma
 
-### Background Service Settings
+### Servis Ayarları
 
-Edit `app/lib/services/sms_service.dart` to adjust:
+`app/lib/services/sms_service.dart` dosyasında:
 
-- Polling interval: Default 15 seconds
-- Request timeout: 10 seconds for API calls
-- Batch size: Maximum 10 messages per request
+- Kontrol aralığı: Varsayılan 15 saniye
+- İstek zaman aşımı: 10 saniye
+- Toplu mesaj limiti: Her istekte maksimum 10 mesaj
 
-### API Rate Limiting
+### Güvenlik Ayarları
 
-No rate limiting is implemented by default. Add middleware if needed for production use.
+- API anahtarları 64 karakterlik hexadecimal dizelerdir
+- Üretim ortamında HTTPS kullanılmalıdır
+- Veritabanı sorguları prepared statement ile korunur
+- CORS varsayılan olarak açıktır (üretimde kısıtlanmalıdır)
 
-## Security Considerations
+## Sorun Giderme
 
-- API keys are 64-character hexadecimal strings
-- Use HTTPS in production
-- API key is stored securely in SharedPreferences on Android
-- Database uses prepared statements to prevent SQL injection
-- CORS is enabled by default (restrict in production)
+**Uygulama çöküyor:**
+- Tüm izinlerin verildiğinden emin olun (SMS, Telefon, Bildirimler)
+- API URL'sinin doğru ve erişilebilir olduğunu kontrol edin
+- Arkaplan servis izinlerini kontrol edin
 
-## Troubleshooting
+**SMS gönderilmiyor:**
+- Cihazın SMS izni olduğunu kontrol edin
+- API anahtarının geçerli olduğunu doğrulayın
+- device_id'nin kayıtlı cihazla eşleştiğini kontrol edin
+- İnternet bağlantısını kontrol edin
 
-**App crashes on start:**
-- Ensure all permissions are granted (SMS, Phone, Notifications)
-- Check API URL is correct and accessible
-- Verify background service permissions in Android settings
+**API 401 hatası veriyor:**
+- X-API-Key header'ının gönderildiğini kontrol edin
+- API anahtarının veritabanında olduğunu doğrulayın
+- Cihazın aktif olduğundan emin olun (is_active = true)
 
-**SMS not sending:**
-- Check device has SMS permissions
-- Verify API key is valid
-- Ensure device_id matches registered device
-- Check network connectivity
+## Yasal Uyarı ve Sorumluluk Reddi
 
-**API returns 401 Unauthorized:**
-- Verify X-API-Key header is sent
-- Check API key exists in database
-- Ensure device is active (is_active = true)
+Bu yazılım, SMS gönderim altyapısı oluşturmak amacıyla geliştirilmiş açık kaynaklı bir projedir. Yazılımın kullanımından doğacak her türlü sorumluluk kullanıcıya aittir.
 
-## License
+**Önemli Hususlar:**
 
-This project is provided as-is for educational and commercial purposes.
+1. Bu yazılım "OLDUĞU GİBİ" sunulmaktadır. Yazılımın kullanımından kaynaklanan hiçbir doğrudan veya dolaylı zarar için geliştirici sorumluluk kabul etmez.
 
-## Support
+2. Yazılımı kullanarak, bulunduğunuz ülkenin telekomünikasyon ve veri koruma yasalarına uymayı kabul etmiş sayılırsınız.
 
-For issues and questions, please check the database logs and API error responses.
-- Otomatik olarak çalışmaya başlar
+3. Toplu SMS gönderimi, spam, izinsiz pazarlama veya yasadışı faaliyetler için kullanılması kesinlikle yasaktır.
 
-## 📱 Uygulama Kullanımı
+4. Yazılım, yalnızca meşru ve yasal amaçlar için kullanılmalıdır. İzinsiz SMS gönderimi, kişisel verilerin korunması kanunlarının ihlali ve benzeri yasadışı faaliyetlerden kullanıcı sorumludur.
 
-1. Uygulamayı açın
-2. API URL'nizi girin (örn: `https://sunucu.com/api.php`)
-3. "Bağlan ve Başlat" butonuna basın
-4. Uygulama otomatik olarak arka planda çalışmaya başlar
-5. API'den gelen SMS istekleri otomatik gönderilir
+5. Ticari kullanım için ilgili telekomünikasyon otoritelerinden gerekli izinlerin alınması kullanıcının sorumluluğundadır.
 
-## 🔌 API Kullanımı
+6. Yazılımın kullanımı sonucu oluşabilecek hukuki, mali veya cezai sorumluluklar tamamen kullanıcıya aittir.
 
-### SMS Gönder
+7. Geliştirici, yazılımın kesintisiz çalışacağını, hatasız olduğunu veya belirli bir amaca uygun olduğunu garanti etmez.
 
-```bash
-curl -X POST http://sunucu.com/api.php?request=send-sms \
-  -H "Content-Type: application/json" \
-  -d '{
-    "device_id": "cihaz-id",
-    "phone_number": "+905551234567",
-    "message": "Test mesajı",
-    "priority": 5
-  }'
-```
+**Yazılımı kullanarak bu şartları kabul etmiş sayılırsınız. Eğer bu şartları kabul etmiyorsanız, yazılımı kullanmayınız.**
 
-### Cihaz Listesi
+## Lisans
 
-```sql
-SELECT * FROM devices WHERE is_active = true;
-```
-
-### SMS Durumu Sorgula
-
-```sql
-SELECT * FROM sms_requests WHERE status = 'pending';
-```
-
-## 🗄️ Veritabanı
-
-**Bağlantı Bilgileri:**
-```
-Host: 31.57.154.24
-Port: 5432
-Database: smspush
-User: postgres
-Password: 15625533+a
-```
-
-**Tablolar:**
-- `devices` - Kayıtlı cihazlar
-- `sms_requests` - SMS istekleri ve durumları
-
-## ✨ Özellikler
-
-### Web API
-✅ PostgreSQL desteği  
-✅ RESTful API  
-✅ Otomatik cihaz kaydı  
-✅ API key güvenliği  
-✅ SMS kuyruğu sistemi  
-✅ Öncelik bazlı gönderim  
-✅ Durum takibi  
-
-### Android App
-✅ Basit kurulum (sadece API URL)  
-✅ Otomatik başlatma  
-✅ Arka plan çalışma  
-✅ Gerçek zamanlı durum gösterimi  
-✅ Öncelik sistemi  
-✅ Hata yönetimi  
-✅ SMS izinleri  
-
-## 📊 API Endpoints
-
-| Endpoint | Method | Açıklama |
-|----------|--------|----------|
-| `/api.php?request=register-device` | POST | Cihaz kaydı |
-| `/api.php?request=pending` | GET | Bekleyen SMS'leri al |
-| `/api.php?request=update-status` | POST | SMS durumu güncelle |
-| `/api.php?request=send-sms` | POST | SMS kuyruğa ekle |
-
-Detaylı API dokümantasyonu: [web/README.md](web/README.md)
-
-## 🔐 Güvenlik
-
-⚠️ **Önemli Notlar:**
-- API anahtarlarını güvenli saklayın
-- Üretim ortamında HTTPS kullanın
-- Veritabanı şifrelerini değiştirin
-- API'yi firewall ile koruyun
-- CORS ayarlarını kısıtlayın
-
-## 💡 Kullanım Senaryosu
-
-1. Web sunucusuna PHP API'yi kurun
-2. PostgreSQL veritabanını oluşturun
-3. Android telefona APK'yi yükleyin
-4. Telefonda uygulamayı açıp API URL'ini girin
-5. Uygulama otomatik çalışmaya başlar
-6. Web uygulamanızdan API'ye SMS isteği gönderin
-7. Android telefon otomatik olarak SMS'i gönderir
-
-## 📋 Gereksinimler
-
-### Web
-- PHP 7.4+
-- PostgreSQL 12+
-- PDO PostgreSQL extension
-
-### App
-- Flutter 3.0+
-- Android SDK
-- Minimum Android 6.0 (API 23)
-- SMS izni
-- Telefon durumu okuma izni
-
-## 🆘 Sorun Giderme
-
-**Uygulama SMS gönderemiyor:**
-- SMS izinlerini kontrol edin
-- Arka plan kısıtlamalarını kapatın
-- Pil optimizasyonunu devre dışı bırakın
-
-**API bağlanamıyor:**
-- URL'nin doğru olduğundan emin olun
-- Sunucu erişilebilir olmalı
-- CORS ayarlarını kontrol edin
-
-**Veritabanı bağlantı hatası:**
-- PostgreSQL servisinin çalıştığından emin olun
-- Bağlantı bilgilerini kontrol edin
-- Firewall ayarlarını kontrol edin
-
-## 📝 Lisans
-
-Bu proje özel kullanım içindir.
-
+Bu proje eğitim ve araştırma amaçlı olarak paylaşılmıştır. Kullanım sorumluluğu tamamen kullanıcıya aittir.
